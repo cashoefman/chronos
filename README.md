@@ -2,19 +2,20 @@
 
 Mesos, ZooKeeper, Chronos and Monit Deployment &amp; Init Scripts for use on AWS 
 
-These simple scripts can be used to deploy Mesos, ZooKeeper, Chronos and Monit on AWS EC2 Instances running Amazon Linux.
+These scripts in `/DeploymentScripts` can be used to deploy Mesos, ZooKeeper, Chronos and Monit on AWS EC2 Instances running 64 Bit Amazon Linux.
+
 
 ### Procedure for Deploying MESOS Cluster on AWS
 
-
 ####Components
+
 * MESOS Master
 * MESOS Slave
 * ZOOKEEPER 
 * CHRONOS
 * MONIT
 
-On Cluster Master:  
+#####On Cluster Master:  
 
 Components Installed: 
 MESOS MASTER / ZOOKEEPER / CHRONOS /MONIT
@@ -39,9 +40,9 @@ Port Range | Source Address                       | Description
               ./mesos-master-deploy.sh -n MESOS_CLUSTER_NAME  
 
 
-On Cluster Slaves:  
+#####On Cluster Slaves:  
 
-Componenets Installed: MESOS SLAVE/MONIT  
+Components Installed: MESOS SLAVE/MONIT  
 
 1. Create Amazon Linux 64 Bit Instance  
 2. Apply security group above
