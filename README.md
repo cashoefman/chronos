@@ -18,7 +18,7 @@ These scripts in `/DeploymentScripts` can be used to deploy Mesos, ZooKeeper, Ch
 #####On Cluster Master:  
 
 Components Installed: 
-MESOS MASTER / ZOOKEEPER / CHRONOS /MONIT
+MESOS MASTER / ZOOKEEPER / CHRONOS / MONIT
 
 1. Create Amazon Linux 64 Bit Instance  
 2. Create and apply appropriate security group with the following rules  
@@ -43,7 +43,7 @@ Port Range | Source Address                       | Description
 
 #####On Cluster Slaves:  
 
-Components Installed: MESOS SLAVE/MONIT  
+Components Installed: MESOS SLAVE / MONIT  
 
 1. Create Amazon Linux 64 Bit Instance  
 2. Apply security group above
