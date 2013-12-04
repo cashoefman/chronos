@@ -34,7 +34,7 @@ Port Range | Source Address                       | Description
 
 
 3. Download deployment script mesos-master-deploy.sh 
-4. run `sudo bash`
+4. run `sudo bash` to switch to bash
 5. run `chmod 755 mesos-master-deploy.sh`  
  
 	The command to deploy is:     
@@ -49,7 +49,7 @@ Components Installed: MESOS SLAVE/MONIT
 2. Apply security group above
 3. Install appropriate software for jobs to run (eg PHP)
 4. Download deployment script mesos-slave-deploy.sh
-5. run `sudo bash`
+5. run `sudo bash` to switch to bash
 6. run `chmod 755 mesos-slave-deploy.sh`     
 
  	The command to deploy is:     
