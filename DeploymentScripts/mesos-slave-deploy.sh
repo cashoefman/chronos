@@ -118,7 +118,8 @@ cat <<END >$INITFILE
 
        
 END
-
+echo "removing master config files"
+rm -rf /etc/init/mesos-master.conf 
 echo "setting up monit scripts"
 
 cat <<END >/etc/monit.d/mesosslave.conf
