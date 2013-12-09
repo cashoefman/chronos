@@ -2,10 +2,9 @@
 #mesos slave deployment script
 
 MESOSRPM="http://downloads.mesosphere.io/master/centos/6/mesos_0.14.1_x86_64.rpm"
-CONFIGPATH="/opt/mesos-deploy/"
-SLAVECONFIGFILE="slave.conf"
-INITFILE="/etc/init.d/mesosslave"
-SERVICENAME="mesosslave"
+SLAVECONFIGFILE="/etc/mesos/zk"
+INITFILE="/etc/init/mesos-slave.conf"
+SERVICENAME="mesos-slave"
 
 
 usage()
@@ -89,94 +88,48 @@ rpm -Uvh $MESOSRPM
 
 if [ $? -eq 0 ]; then
 
-#create mesos config directory
-echo "creating configuration directory"
-mkdir -p $CONFIGPATH
 
 echo "creating configuration file "
 echo "using mesos master:$ZK "
 #write config file
-echo "ZKHOST="$ZK"" > "$CONFIGPATH$SLAVECONFIGFILE"
+echo "ZKHOST="zk://$ZK:2181/mesos"" > "$SLAVECONFIGFILE"
 
 echo "creating init scripts"
 cat <<END >$INITFILE
-#!/bin/bash
-# 
-# chkconfig: 2345 89 9 
-# description: mesosslave
+       description "mesos slave"
 
-source /etc/rc.d/init.d/functions
-source /opt/mesos-deploy/slave.conf
+       start on runlevel [2345]
+       respawn
 
-RETVAL=0
-lockfile="/var/lock/subsys/mesosslave"
-desc="Mesos slave daemon"
-
-if [[ -z \$ZKHOST ]]
-then
-     echo "Please run mesos_slave_deploy.sh first"
-     exit 1
-fi
-
-
-
- start() {
-
-       public_hostname="\$( curl -sSf --connect-timeout 1  http://169.254.169.254/latest/meta-data/local-ipv4 )"
+       script
+       public_hostname="\$( curl -sSf --connect-timeout 1 http://169.254.169.254/latest/meta-data/local-ipv4 )"
        echo "Setting hostname to \$public_hostname"
        hostname \$public_hostname
        echo \$public_hostname > /etc/hostname
        HOSTNAME=\$public_hostname
+       echo $$ > /var/run/mesos-slave.pid
+       exec /usr/bin/mesos-init-wrapper slave
+       end script
 
-       echo -n "Starting Mesos slave daemon"
-       echo "Mesos Master host:\$ZKHOST"
+
+       post-stop script
+       rm -f /var/run/mesos-slave.pid
+       end script
+
        
-       /usr/local/sbin/mesos-slave --master=zk://\$ZKHOST:2181/mesos --quiet --log_dir=/var/log/mesos & >/var/log/mesosslave.log
-        echo \$! > /var/run/mesosslave.pid
-        success \$"mesosslave startup"
-        echo
-     
-}
-
-
-stop() {
-        echo -n "Stopping mesosslave"
-        pkill mesos-slave
-      
-        echo
-}
-### main logic ###
-case "\$1" in
-  start)
-        start
-        ;;
-  stop)
-        stop
-        ;;
-  status)
-        status mesos-slave
-        ;;
-  restart|reload|condrestart)
-        stop
-        start
-        ;;
-  *)
-        echo \$"Usage: \$0 {start|stop|restart|reload|status}"
-        exit 1
-esac
-exit 0
-
 END
-
-chmod 755 $INITFILE
+echo "removing master config files"
+rm -rf /etc/init/mesos-master.conf 
 echo "setting up monit scripts"
 
 cat <<END >/etc/monit.d/mesosslave.conf
-check process mesos_slave with pidfile /var/run/mesosslave.pid
+check process mesos_slave with pidfile /var/run/mesos-slave.pid
 
-       start = "/etc/init.d/mesosslave start"
+       start = "/sbin/initctl start mesos-slave"
 
-       stop = "/etc/init.d/mesosslave stop"
+       stop = "/sbin/initctl stop mesos-slave"
+
+
 END
 
 monit reload
@@ -195,5 +148,3 @@ else
     echo "Error installing mesos packages"
     exit 1
 fi
-
-
