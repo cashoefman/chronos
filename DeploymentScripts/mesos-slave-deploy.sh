@@ -92,7 +92,7 @@ if [ $? -eq 0 ]; then
 echo "creating configuration file "
 echo "using mesos master:$ZK "
 #write config file
-echo "ZKHOST="zk://$ZK:2181/mesos"" > "$SLAVECONFIGFILE"
+echo "zk://$ZK:2181/mesos" > "$SLAVECONFIGFILE"
 
 echo "creating init scripts"
 cat <<END >$INITFILE
@@ -107,7 +107,7 @@ cat <<END >$INITFILE
        hostname \$public_hostname
        echo \$public_hostname > /etc/hostname
        HOSTNAME=\$public_hostname
-       echo $$ > /var/run/mesos-slave.pid
+       echo \$\$ > /var/run/mesos-slave.pid
        exec /usr/bin/mesos-init-wrapper slave
        end script
 
