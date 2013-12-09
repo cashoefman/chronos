@@ -122,7 +122,7 @@ fi
 
  start() {
 
-       public_hostname="\$( curl -sSf --connect-timeout 1 http://169.254.169.254/latest/meta-data/public-hostname )"
+       public_hostname="\$( curl -sSf --connect-timeout 1  http://169.254.169.254/latest/meta-data/local-ipv4 )"
        echo "Setting hostname to \$public_hostname"
        hostname \$public_hostname
        echo \$public_hostname > /etc/hostname
