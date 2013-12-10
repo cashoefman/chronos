@@ -4,12 +4,10 @@
 MESOSRPM="http://downloads.mesosphere.io/master/centos/6/mesos_0.14.1_x86_64.rpm"
 ZKBIN="http://apache.osuosl.org/zookeeper/zookeeper-3.4.5/zookeeper-3.4.5.tar.gz"
 ZKPATH="/opt/zookeeper/"
-MESOSCONFIGPATH="/opt/mesos-deploy/"
-MASTERCONFIGFILE="master.conf"
-MESOSINITFILE="/etc/init.d/mesosmaster"
-ZKINITFILE="/etc/init.d/zookeeper"
-MESOSSERVICENAME="mesosmaster"
-ZKSERVICENAME="zookeeper"
+MASTERCONFIGFILE="/etc/default/mesos-master"
+MESOSINITFILE="/etc/init/mesos-master.conf"
+MESOSSERVICENAME="mesos-master"
+
 
 
 usage()
@@ -117,93 +115,48 @@ fi
 
 
 #create mesos config directory
-echo "creating configuration directory"
-mkdir -p $MESOSCONFIGPATH
+
 
 echo "creating configuration file "
 echo "using local zookeeper instalation"
 #write config file
-cat <<END >$MESOSCONFIGPATH$MASTERCONFIGFILE
-ZKHOST="127.0.0.1"
-CLUSTERNAME="$NAME"
+cat <<END >$MASTERCONFIGFILE
+PORT=5050
+ZK=`cat /etc/mesos/zk`
+CLUSTER=$NAME
 END
 
 
 echo "creating init scripts"
 cat <<END >$MESOSINITFILE
-#!/bin/bash
-
-# chkconfig: 2345 89 9 
-# description: mesosmaster
-
-source /etc/rc.d/init.d/functions
-source /opt/mesos-deploy/master.conf
-RETVAL=0
-lockfile="/var/lock/subsys/mesosmaster"
-desc="mesos Master daemon"
-
-if [[ -z \$ZKHOST ]] || [[ -z \$CLUSTERNAME ]] 
-then
-     echo "please run mesos_master_deploy.sh first"
-     exit 1
-fi
-
-
-
- start() {
-  
-      echo -n "Starting mesos master daemon"
-      echo "ZooKeeper host:\$ZKHOST , Cluster Name:\$CLUSTERNAME"
+  description "mesos master"
        
-       /usr/local/sbin/mesos-master --zk=zk://\$ZKHOST:2181/mesos --port=5050 --cluster=\$CLUSTERNAME --quiet --log_dir=/var/log/mesos & >/var/log/mesosmaster.log
-        echo \$! > /var/run/mesosmaster.pid
-        ### Create the lock file ###
-        success \$"mesosmaster startup"
-        echo
-     
-}
+       start on runlevel [2345]
+       respawn
+       
+       script
+       echo \$\$ > /var/run/mesos-master.pid
+       exec /usr/bin/mesos-init-wrapper master
+       end script
 
 
-stop() {
-        echo -n "Stopping mesosmaster"
-        pkill mesos-master
-      
-        echo
-}
-### main logic ###
-case "\$1" in
-  start)
-        start
-        ;;
-  stop)
-        stop
-        ;;
-  status)
-        status mesos-master
-        ;;
-  restart|reload|condrestart)
-        stop
-        start
-        ;;
-  *)
-        echo \$"Usage: \$0 {start|stop|restart|reload|status}"
-        exit 1
-esac
-exit 0
-
+       post-stop script
+       rm -f /var/run/mesos-master.pid
+       end script
 
 END
 
-chmod 755 $MESOSINITFILE
 
 echo "setting up monit scripts"
 
 cat <<END >/etc/monit.d/mesosmaster.conf
-check process mesos_master with pidfile /var/run/mesosmaster.pid
+check process mesos_master with pidfile /var/run/mesos-master.pid
 
-       start = "/etc/init.d/mesosmaster start"
+   
+       start = "/sbin/initctl start mesos-master"
 
-       stop = "/etc/init.d/mesosmaster stop"
+       stop = "/sbin/initctl stop mesos-master"
+
 END
 
 monit reload
